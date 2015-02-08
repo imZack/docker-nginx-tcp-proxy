@@ -1,0 +1,41 @@
+
+daemon off;
+
+http {
+    server {
+        listen 8000;
+        location /status {
+            tcp_check_status;
+        }
+    }
+}
+
+tcp {
+     upstream mqtt {
+         server test.mosquitto.org:1883;
+         check interval=3000 rise=2 fall=5 timeout=1000;
+     }
+
+     upstream ssh {
+         server localhost:22;
+         check interval=3000 rise=2 fall=5 timeout=1000;
+     }
+
+    server {
+        listen 80;
+        server_name mqtt.192.168.1.1.xip.io;
+        proxy_pass mqtt;
+    }
+
+    server {
+        listen 80;
+        server_name ssh.192.168.1.1.xip.io;
+        proxy_pass ssh;
+    }
+}
+
+worker_processes 20;
+
+events {
+    worker_connections 1024;
+}
